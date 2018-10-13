@@ -183,7 +183,7 @@
               <span
                 onClick={
                   ()=>{
-                    props.toggle && props.toggle(item)
+                    props.toggle && props.toggle(item.id)
                   }
                 }
                 style={{textDecoration: item.complete? 'line-through': 'none'}}
@@ -203,21 +203,31 @@
       }
       addItem = (e) =>{
         e.preventDefault()
-        const name = this.input.value 
-        this.input.value = ''
-        this.props.store.dispatch(
-          addTodoAction({
-            id: generateId(),
-            name: name,
-            complete: false
+
+        return API.saveTodo(this.input.value)
+          .then((todo)=>{
+            this.props.store.dispatch(addTodoAction(todo))
+            this.input.value=""
           })
-        )
+          .catch(()=>{
+            alert('There was an error. Try again')
+          })
       }
       removeItem = (todo) =>{
         this.props.store.dispatch(removeTodoAction(todo.id))
+        return API.deleteTodo(todo.id)
+          .catch(()=>{
+            this.props.store.dispatch(addTodoAction(todo));
+            alert('There was an error. Try again')
+          })
       }
-      toggleItem = (todo)=>{
-        this.props.store.dispatch(toggleTodoAction(todo.id))
+      toggleItem = (id)=>{
+        this.props.store.dispatch(toggleTodoAction(id));
+        return API.saveTodoToggle(id)
+        .catch(()=>{
+            this.props.store.dispatch(toggleTodoAction(id));
+            alert('There was an error. Try again')
+          })
       }
       render(){
         return(
@@ -288,7 +298,6 @@
         ]).then(([todos, goals])=>{
           console.log(todos)
           store.dispatch(receiveDataAction(todos, goals))       })
-
         store.subscribe(()=>{
           this.forceUpdate()
         })
