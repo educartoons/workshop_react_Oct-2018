@@ -1,8 +1,11 @@
-function sumaYSubstract(a, b) {
-  return {
-    suma: a + b,
-    resta: a - b
+function sum(a, b) {
+  return x => {
+    return x(a + b);
   };
 }
 
-console.log(sumaYSubstract(10, 5));
+function multiply(val) {
+  console.log("El valor es: ", val);
+}
+
+console.log(sum(5, 10)(multiply));

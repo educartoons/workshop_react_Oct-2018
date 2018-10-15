@@ -128,6 +128,42 @@
       return store.dispatch(action)
     }
 
+    function handleAddTodo(name, cb) {
+      return (dispatch) => {
+        return API.saveTodo(name)
+          .then((todo) => {
+            dispatch(addTodoAction(todo))
+            cb()
+          })
+          .catch(() => {
+            alert('There was an error')
+          })
+      }
+    }
+
+    function handleRemoveTodo(todo) {
+      return (dispatch) => {
+        dispatch(removeTodoAction(todo.id));
+        return API.deleteTodo(todo.id)
+          .catch(() => {
+            dispatch(addTodoAction(todo));
+            alert('There was an error. Try again')
+          })
+      }
+    }
+
+    function handleToggleTodo(id) {
+      return (dispatch) => {
+        dispatch(toggleTodoAction(id));
+        return API.saveTodoToggle(id)
+          .catch(() => {
+            dispatch(toggleTodoAction(id));
+            alert('There was an error. Try again')
+          })
+      }
+    }
+
+
     // Day 3 - Jueves React, React Redux, React-redux, Test Driven Development
     // Day 4 - Viernes { React Navigation } React Native
     // Day 5 - Lunes { React Navigation } React Native
@@ -153,6 +189,16 @@
       return result;
     }
 
+    const thunk = (store) => (next) => (action) => {
+      if (typeof action === 'function') {
+        return action(store.dispatch)
+      }
+      return next(action)
+    }
+
+
+
+
     // Utils 
 
     function generateId() {
@@ -169,7 +215,7 @@
         goals: reducerGoal,
         loading: reducerLoading
       }),
-      Redux.applyMiddleware(checker, logger)
+      Redux.applyMiddleware(thunk, checker, logger)
     );
   </script>
 
@@ -203,31 +249,17 @@
       }
       addItem = (e) =>{
         e.preventDefault()
-
-        return API.saveTodo(this.input.value)
-          .then((todo)=>{
-            this.props.store.dispatch(addTodoAction(todo))
-            this.input.value=""
-          })
-          .catch(()=>{
-            alert('There was an error. Try again')
-          })
+        this.props.store.dispatch(handleAddTodo(
+          this.input.value,
+          ()=>this.input.value=""
+        ));
+        
       }
       removeItem = (todo) =>{
-        this.props.store.dispatch(removeTodoAction(todo.id))
-        return API.deleteTodo(todo.id)
-          .catch(()=>{
-            this.props.store.dispatch(addTodoAction(todo));
-            alert('There was an error. Try again')
-          })
+        this.props.store.dispatch(handleRemoveTodo(todo));
       }
       toggleItem = (id)=>{
-        this.props.store.dispatch(toggleTodoAction(id));
-        return API.saveTodoToggle(id)
-        .catch(()=>{
-            this.props.store.dispatch(toggleTodoAction(id));
-            alert('There was an error. Try again')
-          })
+        this.props.store.dispatch(handleToggleTodo(id));
       }
       render(){
         return(
@@ -255,18 +287,22 @@
     class Goals extends React.Component{
       addItem = (e) =>{
         e.preventDefault()
-        const name = this.input.value 
-        this.input.value = ''
-        this.props.store.dispatch(
-          addGoalAction({
-            id: generateId(),
-            name: name,
-            complete: false
+        return API.saveGoal(this.input.value)
+          .then((goal)=>{
+            this.props.store.dispatch(addGoalAction(goal))
+            this.input.value=""
           })
-        )
+          .catch(()=>{
+            alert('There was an error. Try again')
+          })
       }
-      removeItem = (todo) =>{
-        this.props.store.dispatch(removeGoalAction(todo.id))
+      removeItem = (goal) =>{
+        this.props.store.dispatch(removeGoalAction(goal.id))
+        return API.deleteGoal(goal.id)
+          .catch(()=>{
+            this.props.store.dispatch(addGoalAction(goal));
+            alert('There was an error. Try again')
+          })
       }
       render(){
         return(
@@ -286,6 +322,8 @@
         )
       }
     }
+
+    
 
     class App extends React.Component{
       componentDidMount(){
