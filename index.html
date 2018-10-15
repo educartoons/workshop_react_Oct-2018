@@ -17,6 +17,7 @@
   <script src="https://unpkg.com/react@16.5.2/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@16.0.0-alpha.10/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://unpkg.com/redux-thunk@2.1.0/dist/redux-thunk.min.js"></script>
   <script src="http://eduarruben.com/api/index.js"></script>
   <script>
 
@@ -163,6 +164,18 @@
       }
     }
 
+    function handleInitialData() {
+      return (dispatch) => {
+        Promise.all([
+          API.fetchTodos(),
+          API.fetchGoals(),
+        ]).then(([todos, goals]) => {
+          console.log(todos)
+          dispatch(receiveDataAction(todos, goals))
+        })
+      }
+    }
+
 
     // Day 3 - Jueves React, React Redux, React-redux, Test Driven Development
     // Day 4 - Viernes { React Navigation } React Native
@@ -189,16 +202,6 @@
       return result;
     }
 
-    const thunk = (store) => (next) => (action) => {
-      if (typeof action === 'function') {
-        return action(store.dispatch)
-      }
-      return next(action)
-    }
-
-
-
-
     // Utils 
 
     function generateId() {
@@ -215,7 +218,7 @@
         goals: reducerGoal,
         loading: reducerLoading
       }),
-      Redux.applyMiddleware(thunk, checker, logger)
+      Redux.applyMiddleware(ReduxThunk.default, checker, logger)
     );
   </script>
 
@@ -327,15 +330,10 @@
 
     class App extends React.Component{
       componentDidMount(){
-
         const {store} = this.props
-        
-        Promise.all([
-          API.fetchTodos(),
-          API.fetchGoals(),
-        ]).then(([todos, goals])=>{
-          console.log(todos)
-          store.dispatch(receiveDataAction(todos, goals))       })
+
+        store.dispatch(handleInitialData())
+
         store.subscribe(()=>{
           this.forceUpdate()
         })
